@@ -16,18 +16,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct info_s {
-    /* Add the required members used in shell_utils.c */
-    int readfd; // Example member used in the interactive function
-    char *history; // Example member used in the display_history function
-    // Add any other members you need in other functions
-} info_t;
+typedef struct(info_s * info_t);
+/**Add the required members used in shell_utils.c**/
+int new_interactive(info_t *info); /**Example member interactive function**/
+int _myhistory(info_t *info); /**Example member  display_history function**/
+/**Add any other members you need in other functions**/
 
 /** convert_String.c **/
 int new_interactive(info_t *info);
 int check_delim(char dc, char *delim);
 int is_custom_alpha(int ca);
 int convert_string(char *sc);
+
+/** command_handlers.c **/
+int shell_exit(info_t *info);
 
 
 /** shell_utils.c **/
@@ -37,16 +39,13 @@ int set_alias(info_t *info, char *str);
 int print_alias(list_t *node);
 int handle_alias(info_t *info);
 
-/** builtin1.c **/
-int _myhistory(info_t *);
-int _myalias(info_t *);
+/** command_path **/
+int _myenv(info_t *info);
+char *_getenv (info_t *info, const char *name);
+int _newenv(info_t *info);
+int _rmovenv(info_t *info);
+int _populate_env_list(info_t *info);
 
-/** environ.c **/
-char *_getenv(info_t *, const char *);
-int _myenv(info_t *);
-int _mysetenv(info_t *);
-int _myunsetenv(info_t *);
-int populate_env_list(info_t *);
 
 /** errors.c **/
 void _eputs(char *);

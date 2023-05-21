@@ -4,11 +4,7 @@
  * shell_exit - Exits shell
  * @info: Structure containing potential arguments
  *
- * description: This function handles the "exit" command in the shell. It exits the shell
- * with a given exit status based on the argument provided. If no argument is
- * provided, the default exit status is 0. If the argument is not a valid number,
- * it prints an error message and returns a non-zero exit status.
- *
+ * Description: Exit the shell with a given exit status based on argument.
  * Return: Exits the shell with the specified exit status.
  * Returns 0 if info->argv[0] is not equal to "exit".
  */
