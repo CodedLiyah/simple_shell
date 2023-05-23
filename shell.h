@@ -16,26 +16,76 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct info_s {
-    /* Add the required members used in shell_utils.c */
-    int readfd; // Example member used in the interactive function
-    char *history; // Example member used in the display_history function
-    // Add any other members you need in other functions
+/* for read/write buffers */
+#define READ_BUF_SIZE 1024
+#define WRITE_BUF_SIZE 1024
+#define BUF_FLUSH -1
+
+/* for command chaining */
+#define CMD_NORM	0
+#define CMD_OR		1
+#define CMD_AND		2
+#define CMD_CHAIN	3
+
+/* for convert_number() */
+#define CONVERT_LOWERCASE	1
+#define CONVERT_UNSIGNED	2
+
+/* 1 if using system getline() */
+#define USE_GETLINE 0
+#define USE_STRTOK 0
+
+#define HIST_FILE	".simple_shell_history"
+#define HIST_MAX	4096
+
+extern char **environ;
+
+
+/**
+ * struct liststr - singly linked list
+ * @num: the number field
+ * @str: a string
+ * @next: points to the next node
+ */
+typedef struct liststr
+{
+	int num;
+	char *str;
+	struct liststr *next;
+} list_t;
+
+typedef struct passinfo
+{
+	char *arg;
+	char **argv;
+	char *path;
+	int argc;
+	unsigned int line_count;
+	int err_num;
+	int linecount_flag;
+	char *fname;
+	list_t *env;
+	list_t *history;
+	list_t *alias;
+	char **environ;
+	int env_changed;
+	int status;
+
+	char **cmd_buf; /* pointer to cmd ; chain buffer, for memory mangement */
+	int cmd_buf_type; /* CMD_type ||, &&, ; */
+	int readfd;
+	int histcount;
 } info_t;
 
 /** convert_String.c **/
 int new_interactive(info_t *info);
-int check_delim(char dc, char *delim);
-int is_custom_alpha(int ca);
+int check_delim(char dc, char *delim );
 int convert_string(char *sc);
+ int convert_string(char *sc);
 
 
-/** shell_utils.c **/
-int display_history(info_t *info);
-int unset_alias(info_t *info, char *str);
-int set_alias(info_t *info, char *str);
-int print_alias(list_t *node);
-int handle_alias(info_t *info);
+/** shell_utils. **/
+
 
 /** builtin1.c **/
 int _myhistory(info_t *);
