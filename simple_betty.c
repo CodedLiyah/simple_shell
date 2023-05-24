@@ -1,16 +1,18 @@
 #include "shell.h"
 
 /**
- * _isalpha - Prints the alphabet
+ * the_alpha - Prints the alphabet
  * @i: The character to input
  *
- * Return:1 if i is alphabetic, 0 otherwise
+ * Return:1 on success, 0 otherwise
  **/
 
-int _isalpha(int i)
+int the_alpha(int i)
 {
 	if ((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
-		return (1);
+	return (1);
+
 	else
-		return (0);
+
+	return (0);
 }
