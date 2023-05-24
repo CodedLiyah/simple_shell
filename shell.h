@@ -99,3 +99,17 @@ typedef struct passinfo
 #define INFO_INIT \
 {NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL, \
 	0, 0, 0}
+
+/**
+ *struct builtin - A builtin string and similar function
+ *@type: A builtin command flag
+ *@func: A function
+ */
+typedef struct builtin
+{
+	char *type;
+	int (*func)(info_t *);
+} builtin_table;
+
+/* simple_betty.c */
+
