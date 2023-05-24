@@ -1,5 +1,5 @@
-#define _SHELL_H_
 #ifndef _SHELL_H_
+#define _SHELL_H_
 
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdint.h>
 
 /* when writing/read buffers */
 #define WRITE_BUF_SIZE 1024
@@ -24,8 +25,8 @@
 #define CMD_OR		3
 
 /* when convert_number() */
-#define CONVERT_UNSIGNED	1
-#define CONVERT_LOWERCASE	2
+#define CONVERT_LOWERCASE	1
+#define CONVERT_UNSIGNED	2
 
 /* 1 when using system getline() */
 #define USE_STRTOK 0
@@ -83,6 +84,8 @@ typedef struct passinfo
 	list_t *alias;
 	list_t *env;
 	int env_changed;
+	char *handle_path;
+	int on_command;
 	unsigned int line_count;
 	int status;
 	char **environ;
@@ -112,21 +115,5 @@ typedef struct builtin
 } builtin_table;
 
 /* simple_betty.c */
-/**
- * _isalpha - Prints the alphabet
- * @i: The character to input
- *
- * Return:1 if i is alphabetic, 0 otherwise
- */
 
-/** simple_path.c **/
-/**
- * * handle_path - Handles the PATH
- * @info: the info struct
- * @pathstr: the PATH string
- * @handle: the command to find
- *
- * Return: full path of command if found or NULL
- */
-char *handle_path(info_t *info, char *str, char *handle)
-
+/** simple_path.c */
