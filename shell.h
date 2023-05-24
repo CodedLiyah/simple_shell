@@ -13,6 +13,8 @@
 #include <fcntl.h>
 #include <stdint.h>
 
+#pragma once
+
 /* when writing/read buffers */
 #define WRITE_BUF_SIZE 1024
 #define BUF_FLUSH -1
@@ -37,18 +39,11 @@
 
 extern char **environ;
 
-/**
- * struct liststr - singly linked list
- * @num: the number field
- * @str: a string
- * @next: points to the next node
- */
 typedef struct liststr
 {
-	struct liststr *next;
-	int num;
-	char *str;
-
+    struct liststr *next;
+    int num;
+    char *str;
 } list_t;
 
 /**
@@ -89,19 +84,17 @@ typedef struct passinfo
 	unsigned int line_count;
 	int status;
 	char **environ;
-	int env_changed;
 	int argc;
-
+	char *fname;
+	unsigned int line_count;
+	char **envp;
 	int readfd;
 	int cmd_buf_type; /* CMD_type ||, &&, ; */
 	int histcount;
-	char **cmd_buf; /* pointer to cmd ; chain buffer, for memory mangement */
-
+	char **cmd_buf; /* pointer to cmd ; chain buffer, for memory management */
 } info_t;
 
-#define INFO_INIT \
-{NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL, \
-	0, 0, 0}
+
 
 /**
  *struct builtin - A builtin string and similar function
@@ -115,5 +108,11 @@ typedef struct builtin
 } builtin_table;
 
 /* simple_betty.c */
+int the_alpha(int);
+
+/* command_line.c */
+int custom_exit(info_t *);
+int change_d(info_t *);
+int custom_help(info_t *);
 
 /** simple_path.c */
