@@ -112,4 +112,21 @@ typedef struct builtin
 } builtin_table;
 
 /* simple_betty.c */
+/**
+ * _isalpha - Prints the alphabet
+ * @i: The character to input
+ *
+ * Return:1 if i is alphabetic, 0 otherwise
+ */
+
+/** simple_path.c **/
+/**
+ * * handle_path - Handles the PATH
+ * @info: the info struct
+ * @pathstr: the PATH string
+ * @handle: the command to find
+ *
+ * Return: full path of command if found or NULL
+ */
+char *handle_path(info_t *info, char *str, char *handle)
 
