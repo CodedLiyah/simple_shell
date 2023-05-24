@@ -1,5 +1,5 @@
-#define _SHELL_H_
 #ifndef _SHELL_H_
+#define _SHELL_H_
 
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdint.h>
 
 #pragma once
 
@@ -26,8 +27,8 @@
 #define CMD_OR		3
 
 /* when convert_number() */
-#define CONVERT_UNSIGNED	1
-#define CONVERT_LOWERCASE	2
+#define CONVERT_LOWERCASE	1
+#define CONVERT_UNSIGNED	2
 
 /* 1 when using system getline() */
 #define USE_STRTOK 0
@@ -78,6 +79,8 @@ typedef struct passinfo
 	list_t *alias;
 	list_t *env;
 	int env_changed;
+	char *handle_path;
+	int on_command;
 	unsigned int line_count;
 	int status;
 	char **environ;
@@ -112,4 +115,4 @@ int custom_exit(info_t *);
 int change_d(info_t *);
 int custom_help(info_t *);
 
-#endif // SHELL_H
+/** simple_path.c */
