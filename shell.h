@@ -47,7 +47,7 @@ int currentstatus(int *status);
 /*char _getline_av(char *buffer);*/
 void free_grid(char **grid, int height);
 void _frk(char **p, char *l, int a, int L, char **v, int e, char **m, char *f);
-void *_calloc(unsigned int nmemb, unsigned int size);
+void *my_calloc(unsigned int num_elem, unsigned int elem_size);
 char **checkbin(char **b, char **m);
 void *_realloc2(char *a, char *p, unsigned int old, unsigned int new_size);
 int  _isexit(char **p, int L, char *l, char **v, char **m, char *f);
