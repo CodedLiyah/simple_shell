@@ -62,13 +62,13 @@ list_path *append_node(list_path **list_head, char *str)
 	new_element->dir = str;
 
 	new_element->p = NULL;
-	if (!*list)
+	if (!*list_head)
 	{
-	*list = new_element;
+	*list_head = new_element;
 	}
 	else
 	{
-		current = *list;
+		current = *list_head;
 
 		while (current->p)
 		{
@@ -79,7 +79,7 @@ list_path *append_node(list_path **list_head, char *str)
 		current->p = new_element;
 	}
 
-	return (*list);
+	return (*list_head);
 }
 
 
