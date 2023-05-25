@@ -1,161 +1,148 @@
 #include "shell.h"
 
-/**
- * exitt - Exits the shell
- * @arv: array of words
- *
- */
-
-void exitt(char **arv)
-{
-	int x, nu;
-
-	if (arv[1])
-	{
-	nu = _atoi(arv[1]);
-	if (nu <= -1)
-		nu = 2;
-	freearv(arv);
-	exit(nu);
-	}
-	for (x = 0; arv[x]; x++)
-		free(arv[x]);
-	free(arv);
-	exit(0);
-}
 
 /**
- * _atoi - Converts a string to an integer
- * @st: pointer to a string
- *
- * Return: Integer
+ * _getenv - gets the value of the global variable
+ * @name: name of the global variable
+ * Return: string of value
  */
-
-int _atoi(char *st)
+char *_getenv(const char *name)
 {
-	int x, y, sig = 1;
+	int i, j;
+	char *value;
 
-	x = 0;
-	y = 0;
-	while (!((st[x] >= '0') && (st[i] <= '9')) && (st[x] != '\0'))
+	if (!name)
+		return (NULL);
+	for (i = 0; environ[i]; i++)
 	{
-		if (st[x] == '-')
+		j = 0;
+		if (name[j] == environ[i][j])
 		{
-		sig = sig * (-1);
-		}
-		x++;
-	}
-	while ((st[x] >= '0') && (st[x] <= '9'))
-	{
-	y = (y * 10) + (sig * (st[x] - '0'));
-		x++;
-	}
-	return (y);
-}
-
-/**
- * env - Prints current environment
- * @arv: An array of arguments
- */
-
-void env(char **arv __attribute__ ((unused)))
-{
-
-	int x;
-
-	for (x = 0; environ[x]; x++)
-	{
-	_puts(environ[x]);
-	_puts("\n");
-	}
-
-}
-
-/**
- * _setenv - Initialize a new environment variable
- * @arv: array of inputed words
- */
-void _setenv(char **arv)
-{
-	int x, y, a;
-
-	if (!arv[1] || !arv[2])
-	{
-	perror(_getenv("_"));
-	return;
-	}
-
-	for (x = 0; environ[x]; x++)
-	{
-		y = 0;
-		if (arv[1][y] == environ[x][y])
-		{
-			while (arv[1][y])
+			while (name[j])
 			{
-				if (arv[1][y] != environ[x][y])
+				if (name[j] != environ[i][j])
 					break;
 
-				y++;
+				j++;
 			}
-			if (arv[1][y] == '\0')
+			if (name[j] == '\0')
 			{
-				a = 0;
-				while (arv[2][a])
-				{
-					environ[x][y + 1 + a] = arv[2][a];
-					k++;
-				}
-				environ[x][y + 1 + a] = '\0';
-				return;
+				value = (environ[i] + j + 1);
+				return (value);
 			}
 		}
 	}
-	if (!environ[x])
+	return (0);
+}
+
+
+/**
+ * add_node_end - adds a new node at the end of a list_t list
+ * @head: pointer to pointer to our linked list
+ * @str: pointer to string in previous first node
+ * Return: address of the new element/node
+ */
+
+list_path *add_node_end(list_path **head, char *str)
+{
+
+	list_path *tmp;
+	list_path *new;
+
+	new = malloc(sizeof(list_path));
+
+	if (!new || !str)
 	{
-
-		environ[x] = concat_all(arv[1], "=", arv[2]);
-		environ[x + 1] = '\0';
-
+		return (NULL);
 	}
+
+	new->dir = str;
+
+	new->p = '\0';
+	if (!*head)
+	{
+		*head = new;
+	}
+	else
+	{
+		tmp = *head;
+
+		while (tmp->p)
+		{
+
+			tmp = tmp->p;
+		}
+
+		tmp->p = new;
+	}
+
+	return (*head);
+}
+
+
+/**
+ * linkpath - creates a linked list for path directories
+ * @path: string of path value
+ * Return: pointer to the created linked list
+ */
+list_path *linkpath(char *path)
+{
+	list_path *head = '\0';
+	char *token;
+	char *cpath = _strdup(path);
+
+	token = strtok(cpath, ":");
+	while (token)
+	{
+		head = add_node_end(&head, token);
+		token = strtok(NULL, ":");
+	}
+
+	return (head);
 }
 
 /**
- * _unsetenv - Removes a environment variable
- * @arv: array of inputed words
+ * _which - finds the pathname of a filename
+ * @filename: name of file or command
+ * @head: head of linked list of path directories
+ * Return: pathname of filename or NULL if no match
  */
-
-void _unsetenv(char **arv)
+char *_which(char *filename, list_path *head)
 {
-	int x, y;
+	struct stat st;
+	char *string;
 
-	if (!arv[1])
+	list_path *tmp = head;
+
+	while (tmp)
 	{
-	perror(_getenv("_"));
-	return;
-	}
-	for (x = 0; environ[x]; x++)
-	{
-		y = 0;
-		if (arv[1][y] == environ[x][y])
+
+		string = concat_all(tmp->dir, "/", filename);
+		if (stat(string, &st) == 0)
 		{
-			while (arv[1][y])
-			{
-				if (arv[1][y] != environ[i][y])
-					break;
-
-				y++;
-			}
-			if (arv[1][y] == '\0')
-			{
-				free(environ[x]);
-				environ[x] = environ[x + 1];
-				while (environ[x])
-				{
-					environ[x] = environ[x + 1];
-					x++;
-				}
-				return;
-			}
+			return (string);
 		}
+		free(string);
+		tmp = tmp->p;
 	}
+
+	return (NULL);
+}
+
+/**
+ * free_list - frees a list_t
+ *@head: pointer to our linked list
+ */
+void free_list(list_path *head)
+{
+	list_path *storage;
+
+	while (head)
+	{
+		storage = head->p;
+		free(head->dir);
+		free(head);
+		head = storage;
+	}
+
 }
