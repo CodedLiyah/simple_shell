@@ -1,156 +1,100 @@
 #include "shell.h"
-
-#include "shell.h"
-
+#include <limits.h>
 /**
- * exitt - exits the shell with or without a return of status n
- * @arv: array of words of the entered line
+ *_type - get the type of exit
+ * @p: input user, array of pointers
+ * @L: counter of loops
+ * @l: input user
+ * @i: number of pointers inside the array of pointers
+ * @v: arguments in input
+ * @m: copy of environmental variables
+ * @e: number of elements in m
+ * @f: input complete
  */
-void exitt(char **arv)
+void _type(char **p, int L, char *l, int i, char **v, char **m, int e, char *f)
 {
-	int i, n;
+	unsigned int  c = 0, flag = 0;
+	long int valor = 0;
 
-	if (arv[1])
+	if (p[1] == NULL || (p[1][0] == '0' && p[1][1] == '\0'))
 	{
-		n = _atoi(arv[1]);
-		if (n <= -1)
-			n = 2;
-		freearv(arv);
-		exit(n);
+		free(l), free(f), free_grid(p, i), free_grid(m, e);
+		exit(currentstatus(NULL));
 	}
-	for (i = 0; arv[i]; i++)
-		free(arv[i]);
-	free(arv);
-	exit(0);
+	else
+	{
+		while (p[1][c] != '\0')
+		{
+			if ((p[1][0] != '+' && p[1][0] != '-') &&
+			    (p[1][c] < 48 || p[1][c] > 57))
+			{
+				flag = 1;
+				break;
+			}
+			c++;
+		}
+		if (flag == 1)
+			_put_err(p, L, 1, v);
+		else
+		{ valor = _atoi(p[1]);
+			if (!(valor > INT_MAX) && valor > 0)
+			{
+				valor = valor % 256;
+				free(l), free(f), free_grid(p, i);
+				free_grid(m, e), exit(valor);
+			}
+			else if (valor < 0)
+			{
+				_put_err(p, L, 1, v);
+				free(l), free(f), free_grid(p, i);
+				free_grid(m, e), exit(2);
+			}
+			else
+				_put_err(p, L, 1, v);
+		}
+	}
 }
-
 /**
- * _atoi - converts a string into an integer
- *@s: pointer to a string
- *Return: the integer
+ * _isexit - finds if line input is exit therefore process termination
+ * @p: input of user, array of pointers
+ * @L: loop counter
+ * @l: input user
+ * @v: arguments in input
+ * @m: copy of environmental variables
+ * @f: complet input
+ * Return: -1 if there is no exit or 0 if there is the word exit
  */
-int _atoi(char *s)
+int _isexit(char **p, int L, char *l, char **v, char **m, char *f)
 {
-	int i, integer, sign = 1;
+	char str[] = "exit";
+	int i, cont = 0, salida = -1, x = 0, e = 0;
 
+	for (x = 0; p[x] != NULL; x++)
+		;
+	for (e = 0; m[e] != NULL; e++)
+		;
 	i = 0;
-	integer = 0;
-	while (!((s[i] >= '0') && (s[i] <= '9')) && (s[i] != '\0'))
+	while (p[0][i] != '\0')
 	{
-		if (s[i] == '-')
+		if (i < 4)
 		{
-			sign = sign * (-1);
+			if (p[0][i] == str[i])
+				cont++;
 		}
 		i++;
 	}
-	while ((s[i] >= '0') && (s[i] <= '9'))
+	if (i == 4)
+		cont++;
+
+	if (cont == 5)
 	{
-		integer = (integer * 10) + (sign * (s[i] - '0'));
-		i++;
+		_type(p, L, l, x, v, m, e, f);
+		salida = 0;
 	}
-	return (integer);
-}
-
-/**
- * env - prints the current environment
- * @arv: array of arguments
- */
-void env(char **arv __attribute__ ((unused)))
-{
-
-	int i;
-
-	for (i = 0; environ[i]; i++)
+	else if (cont == 4)
 	{
-		_puts(environ[i]);
-		_puts("\n");
+		salida = 0;
+		_put_err(p, L, 3, v);
 	}
-
-}
-
-/**
- * _setenv - Initialize a new environment variable, or modify an existing one
- * @arv: array of entered words
- */
-void _setenv(char **arv)
-{
-	int i, j, k;
-
-	if (!arv[1] || !arv[2])
-	{
-		perror(_getenv("_"));
-		return;
-	}
-
-	for (i = 0; environ[i]; i++)
-	{
-		j = 0;
-		if (arv[1][j] == environ[i][j])
-		{
-			while (arv[1][j])
-			{
-				if (arv[1][j] != environ[i][j])
-					break;
-
-				j++;
-			}
-			if (arv[1][j] == '\0')
-			{
-				k = 0;
-				while (arv[2][k])
-				{
-					environ[i][j + 1 + k] = arv[2][k];
-					k++;
-				}
-				environ[i][j + 1 + k] = '\0';
-				return;
-			}
-		}
-	}
-	if (!environ[i])
-	{
-
-		environ[i] = concat_all(arv[1], "=", arv[2]);
-		environ[i + 1] = '\0';
-
-	}
-}
-/**
- * _unsetenv - Remove an environment variable
- * @arv: array of entered words
- */
-void _unsetenv(char **arv)
-{
-	int i, j;
-
-	if (!arv[1])
-	{
-		perror(_getenv("_"));
-		return;
-	}
-	for (i = 0; environ[i]; i++)
-	{
-		j = 0;
-		if (arv[1][j] == environ[i][j])
-		{
-			while (arv[1][j])
-			{
-				if (arv[1][j] != environ[i][j])
-					break;
-
-				j++;
-			}
-			if (arv[1][j] == '\0')
-			{
-				free(environ[i]);
-				environ[i] = environ[i + 1];
-				while (environ[i])
-				{
-					environ[i] = environ[i + 1];
-					i++;
-				}
-				return;
-			}
-		}
-	}
+	return (salida);
 }
