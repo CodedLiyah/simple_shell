@@ -49,11 +49,11 @@ list_path *linkpath(char *path)
  * @command: The name of the built-in command
  * @execute:  A pointer to the function that executes the built-in command
  */
-typedef struct mybuild
+typedef struct my_build
 {
 	char *command;
 	void (*execute)(char **);
-} mybuild;
+} my_build;
 
 void(*checkbuild(char **arv))(char **arv);
 int _atoi(char *s);
