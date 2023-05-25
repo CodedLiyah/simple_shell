@@ -1,86 +1,161 @@
 #include "shell.h"
-#include <stddef.h>
 
 /**
- * on_command - Checks if a file is an executable command
- * @info: the info struct
- * @path: path to the file
+ * exitt - Exits the shell
+ * @arv: array of words
  *
- * Return: 1 if true, 0 otherwise
  */
-int on_command(info_t *info, char *path)
+
+void exitt(char **arv)
 {
-	struct stat st;
+	int x, nu;
 
-	(void)info;
-	if (!path || stat(path, &st))
-		return (0);
-
-	if (st.st_mode & S_IFREG)
+	if (arv[1])
 	{
-		return (1);
+	nu = _atoi(arv[1]);
+	if (nu <= -1)
+		nu = 2;
+	freearv(arv);
+	exit(nu);
 	}
-	return (0);
+	for (x = 0; arv[x]; x++)
+		free(arv[x]);
+	free(arv);
+	exit(0);
 }
 
 /**
- * double_ - duplicates characters
- * @pathstr: the PATH string
- * @on: starting index
- * @off: stopping index
+ * _atoi - Converts a string to an integer
+ * @st: pointer to a string
  *
- * Return: pointer to new buffer
+ * Return: Integer
  */
-char *double_(char *pathstr, int on, int off)
+
+int _atoi(char *st)
 {
-	static char buf[1024];
-	int a = 0, j = 0;
+	int x, y, sig = 1;
 
-	for (j = 0, a = on; a < off; a++)
-		if (pathstr[a] != ':')
-			buf[j++] = pathstr[a];
-	buf[j] = 0;
-	return (buf);
-}
-
-/**
- * handle_path - Handles the command for the path
- * @str: the PATH string
- * @handle: the cmd to find
- * @info :the info struct
- * Return: full path of command if found or NULL
- */
-char *handle_path(info_t *info char *str, char *handle)
-{
-	int i = 0, curr_pos = 0;
-	char *path;
-
-	if (!str)
-		return (NULL);
-	if ((_strlen(cmd) > 2) && starts_with(handle, "./"))
+	x = 0;
+	y = 0;
+	while (!((st[x] >= '0') && (st[i] <= '9')) && (st[x] != '\0'))
 	{
-		if (is_handle(info, handle))
-			return (handle);
-	}
-	while (1)
-	{
-		if (!str[i] || str[i] == ':')
+		if (st[x] == '-')
 		{
-			path = dup_chars(str, curr_pos, i);
-			if (!*path)
-				_strcat(path, handle);
-			else
-			{
-				_strcat(path, "/");
-				_strcat(path, handle);
-			}
-			if (is_cmd(info, path))
-				return (path);
-			if (!str[i])
-				break;
-			curr_pos = i;
+		sig = sig * (-1);
 		}
-		i++;
+		x++;
 	}
-	return (NULL);
+	while ((st[x] >= '0') && (st[x] <= '9'))
+	{
+	y = (y * 10) + (sig * (st[x] - '0'));
+		x++;
+	}
+	return (y);
+}
+
+/**
+ * env - Prints current environment
+ * @arv: An array of arguments
+ */
+
+void env(char **arv __attribute__ ((unused)))
+{
+
+	int x;
+
+	for (x = 0; environ[x]; x++)
+	{
+	_puts(environ[x]);
+	_puts("\n");
+	}
+
+}
+
+/**
+ * _setenv - Initialize a new environment variable
+ * @arv: array of inputed words
+ */
+void _setenv(char **arv)
+{
+	int x, y, a;
+
+	if (!arv[1] || !arv[2])
+	{
+	perror(_getenv("_"));
+	return;
+	}
+
+	for (x = 0; environ[x]; x++)
+	{
+		y = 0;
+		if (arv[1][y] == environ[x][y])
+		{
+			while (arv[1][y])
+			{
+				if (arv[1][y] != environ[x][y])
+					break;
+
+				y++;
+			}
+			if (arv[1][y] == '\0')
+			{
+				a = 0;
+				while (arv[2][a])
+				{
+					environ[x][y + 1 + a] = arv[2][a];
+					k++;
+				}
+				environ[x][y + 1 + a] = '\0';
+				return;
+			}
+		}
+	}
+	if (!environ[x])
+	{
+
+		environ[x] = concat_all(arv[1], "=", arv[2]);
+		environ[x + 1] = '\0';
+
+	}
+}
+
+/**
+ * _unsetenv - Removes a environment variable
+ * @arv: array of inputed words
+ */
+
+void _unsetenv(char **arv)
+{
+	int x, y;
+
+	if (!arv[1])
+	{
+	perror(_getenv("_"));
+	return;
+	}
+	for (x = 0; environ[x]; x++)
+	{
+		y = 0;
+		if (arv[1][y] == environ[x][y])
+		{
+			while (arv[1][y])
+			{
+				if (arv[1][y] != environ[i][y])
+					break;
+
+				y++;
+			}
+			if (arv[1][y] == '\0')
+			{
+				free(environ[x]);
+				environ[x] = environ[x + 1];
+				while (environ[x])
+				{
+					environ[x] = environ[x + 1];
+					x++;
+				}
+				return;
+			}
+		}
+	}
 }
