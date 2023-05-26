@@ -1,78 +1,85 @@
 #include "shell.h"
 
 /**
- * _errorcd - writes the error
- * @p: input pointer pointer of an array
- * Return: nothing.
+ *_eputs - prints an input string
+ * @str: the string to be printed
+ *
+ * Return: Nothing
  */
-void _errorcd(char **p)
+void _eputs(char *str)
 {
-	int a = 2;
+	int i = 0;
 
-	write(STDERR_FILENO, p[0], 2);
-	write(STDERR_FILENO, ": can't cd to ", 14);
-	write(STDERR_FILENO, p[1], _strlen(p[1]));
-	write(STDERR_FILENO, "\n", 1);
-	currentstatus(&a);
+	if (!str)
+		return;
+	while (str[i] != '\0')
+	{
+		_eputchar(str[i]);
+		i++;
+	}
 }
-/**
- * _errorexit - writes the error
- * @p: input pointer
- * Return: nothing.
- */
-void _errorexit(char **p)
-{
-	int a = 2;
 
-	write(STDERR_FILENO, p[0], 4);
-	write(STDERR_FILENO, ": Illegal number: ", 18);
-	write(STDERR_FILENO, p[1], _strlen(p[1]));
-	write(STDERR_FILENO, "\n", 1);
-	currentstatus(&a);
+/**
+ * _eputchar - writes the character c to stderr
+ * @c: The character to print
+ *
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _eputchar(char c)
+{
+	static int i;
+	static char buf[WRITE_BUF_SIZE];
+
+	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	{
+		write(2, buf, i);
+		i = 0;
+	}
+	if (c != BUF_FLUSH)
+		buf[i++] = c;
+	return (1);
 }
-/**
- * _errorhelp - writes the error
- * @p: input pointer
- * Return: nothing.
- */
-void _errorhelp(char **p)
-{
-	int a = 2;
 
-	write(STDERR_FILENO, p[0], 4);
-	write(STDERR_FILENO, ": no help topics match '", 24);
-	write(STDERR_FILENO, p[1], _strlen(p[1]));
-	write(STDERR_FILENO, "'. Try 'help help' or 'man -k '", 31);
-	write(STDERR_FILENO, p[1], _strlen(p[1]));
-	write(STDERR_FILENO, "' or info '", 11);
-	write(STDERR_FILENO, p[1], _strlen(p[1]));
-	write(STDERR_FILENO, "'\n", 2);
-	currentstatus(&a);
+/**
+ * _putfd - writes the character c to given fd
+ * @c: The character to print
+ * @fd: The filedescriptor to write to
+ *
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _putfd(char c, int fd)
+{
+	static int i;
+	static char buf[WRITE_BUF_SIZE];
+
+	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	{
+		write(fd, buf, i);
+		i = 0;
+	}
+	if (c != BUF_FLUSH)
+		buf[i++] = c;
+	return (1);
 }
-/**
- * _errorgarbage - writes the error
- * @p: input pointer
- * Return: nothing.
- */
-void _errorgarbage(char **p)
-{
-	int a = 2;
 
-	write(STDERR_FILENO, p[0], _strlen(p[0]));
-	write(STDERR_FILENO, ": not found\n", 12);
-	currentstatus(&a);
-}
 /**
- * _errorenv - writes the error
- * @p: input pointer
- * Return: nothing.
+ *_putsfd - prints an input string
+ * @str: the string to be printed
+ * @fd: the filedescriptor to write to
+ *
+ * Return: the number of chars put
  */
-void _errorenv(char **p)
+int _putsfd(char *str, int fd)
 {
-	int a = 2;
+	int i = 0;
 
-	write(STDERR_FILENO, p[0], _strlen(p[0]));
-	write(STDERR_FILENO, ": unable to add/rm variable ", 28);
-	write(STDERR_FILENO, "\n", 1);
-	currentstatus(&a);
+	if (!str)
+		return (0);
+	while (*str)
+	{
+		i += _putfd(*str++, fd);
+	}
+	return (i);
 }
