@@ -1,33 +1,28 @@
-#include "shell.h"
 #include <stdlib.h>
-
+#include "shell.h"
 /**
- * my_calloc - Allocates memory for an array and initializes it to zero
- * @num_elem: Number of elements in an array
- * @elem_size: Size of each element in bytes
- *
- * Return: Pointer to the allocated memory, or NULL if unsuccessful
+ * _calloc -  takes two arguments, the number of elements to allocate memory
+ * @nmemb: number of elements
+ * @size: the size of each element in bytes
+ * Return: nothing or zero
  */
-
-void *my_calloc(unsigned int num_elem, unsigned int elem_size)
+void *_calloc(unsigned int nmemb, unsigned int size)
 {
-	unsigned int x;
-	void *ptr = NULL;
+	void *p = NULL;
+	unsigned int i;
 
-	if (num_elem == 0 || elem_size == 0)
+	if (nmemb == 0 || size == 0)
 	{
-	return (NULL);
+		return (NULL);
 	}
-
-	ptr = malloc(num_elem * elem_size);
-	if (ptr == NULL)
+	p = malloc(nmemb * size);
+	if (p == NULL)
 	{
-	return (NULL);
+		return (NULL);
 	}
-
-	for (x = 0; x < (num_elem * elem_size); x++)
+	for (i = 0; i < (nmemb * size); i++)
 	{
-	*((char *)(ptr) + x) = 0;
+		*((char *)(p) + i) = 0;
 	}
-	return (ptr);
+	return (p);
 }
