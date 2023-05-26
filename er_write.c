@@ -1,110 +1,140 @@
 #include "shell.h"
+
 /**
- * _put_err - writes the error
- * @p: input pointer
- * @loop: counter of loops
- * @sig: signal
- * @v: arguments in input
- * Return: Nothing.
+ * _erratoi - converts a string to an integer
+ * @s: the string to be converted
+ * Return: 0 if no numbers in string, converted number otherwise
+ *       -1 on error
  */
-void _put_err(char **p, int loop, int sig, char *v[])
+int _erratoi(char *s)
 {
-	static int pr = 1;
+	int i = 0;
+	unsigned long int result = 0;
 
-
-	if (sig == 0)
-		pr = 0;
-	pr++;
-	if (sig == 3)
-		pr = 3;
-	if (sig == 4)
-		pr = 4;
-	if (sig == 5)
-		pr = 5;
-	if (pr == 2 || (pr == 3 && sig == 3) || (pr == 4 && sig == 4)
-	    || (pr == 5 && sig == 5))
+	if (*s == '+')
+		s++;  /* TODO: why does this make main return 255? */
+	for (i = 0;  s[i] != '\0'; i++)
 	{
-		write(STDERR_FILENO, v[0], _strlen(v[0]));
-		write(STDERR_FILENO, ": ", 2);
-		print_number(loop);
-		write(STDERR_FILENO, ": ", 2);
+		if (s[i] >= '0' && s[i] <= '9')
+		{
+			result *= 10;
+			result += (s[i] - '0');
+			if (result > INT_MAX)
+				return (-1);
+		}
+		else
+			return (-1);
 	}
-	if (pr == 2)
-		_builtinerr(p);
-	else if (pr == 3 && sig == 3)
-	{
-		_errorgarbage(p);
-		pr = 1;
-	}
-	else if (pr == 4 && sig == 4)
-	{
-		write(STDERR_FILENO, p[0], _strlen(p[0]));
-		write(STDERR_FILENO, ": Permission denied\n", 20);
-	}
-	else if (pr == 5 && sig == 5)
-		_builtinerr2(p);
+	return (result);
 }
 
 /**
- * _builtinerr - writes the error
- * @p: input pointer
- * Return: nothing.
+ * print_error - prints an error message
+ * @info: the parameter & return info struct
+ * @estr: string containing specified error type
+ * Return: 0 if no numbers in string, converted number otherwise
+ *        -1 on error
  */
-void _builtinerr(char **p)
+void print_error(info_t *info, char *estr)
 {
-	char str1[3] = "cd", str2[5] = "exit", str3[5] = "help";
-	int i = 0, j = 0, cont = 0, cont2 = 0;
-
-	while (p[0][j] != '\0')
-		j++;
-	if (j == 2)
-	{
-		for (; i < 2; i++)
-			if (p[0][i] == str1[i])
-				cont++;
-		if (cont == 2)
-			_errorcd(p);
-	}
-	if (j == 4)
-	{
-		for (i = 0 ; i < 4; i++)
-			if (p[0][i] == str2[i])
-				cont++;
-		if (cont == 4)
-			_errorexit(p);
-		for (i = 0; i < 4; i++)
-			if (p[0][i] == str3[i])
-				cont2++;
-		if (cont2 == 4)
-			_errorhelp(p);
-	}
+	_eputs(info->fname);
+	_eputs(": ");
+	print_d(info->line_count, STDERR_FILENO);
+	_eputs(": ");
+	_eputs(info->argv[0]);
+	_eputs(": ");
+	_eputs(estr);
 }
-/**
- * _builtinerr2 - writes the error
- * @p: input pointer
- * Return: nothing.
- */
-void _builtinerr2(char **p)
-{
-	char str1[9] = "unsetenv", str2[7] = "setenv";
-	int i = 0, j = 0, cont = 0;
 
-	while (p[0][j] != '\0')
-		j++;
-	if (j == 8)
+/**
+ * print_d - function prints a decimal (integer) number (base 10)
+ * @input: the input
+ * @fd: the filedescriptor to write to
+ *
+ * Return: number of characters printed
+ */
+int print_d(int input, int fd)
+{
+	int (*__putchar)(char) = _putchar;
+	int i, count = 0;
+	unsigned int _abs_, current;
+
+	if (fd == STDERR_FILENO)
+		__putchar = _eputchar;
+	if (input < 0)
 	{
-		for (; i < 8; i++)
-			if (p[0][i] == str1[i])
-				cont++;
-		if (cont == 8)
-			_errorenv(p);
+		_abs_ = -input;
+		__putchar('-');
+		count++;
 	}
-	if (j == 6)
+	else
+		_abs_ = input;
+	current = _abs_;
+	for (i = 1000000000; i > 1; i /= 10)
 	{
-		for (; i < 6; i++)
-			if (p[0][i] == str2[i])
-				cont++;
-		if (cont == 6)
-			_errorenv(p);
+		if (_abs_ / i)
+		{
+			__putchar('0' + current / i);
+			count++;
+		}
+		current %= i;
 	}
+	__putchar('0' + current);
+	count++;
+
+	return (count);
+}
+
+/**
+ * convert_number - converter function, a clone of itoa
+ * @num: number
+ * @base: base
+ * @flags: argument flags
+ *
+ * Return: string
+ */
+char *convert_number(long int num, int base, int flags)
+{
+	static char *array;
+	static char buffer[50];
+	char sign = 0;
+	char *ptr;
+	unsigned long n = num;
+
+	if (!(flags & CONVERT_UNSIGNED) && num < 0)
+	{
+		n = -num;
+		sign = '-';
+
+	}
+	array = flags & CONVERT_LOWERCASE ? "0123456789abcdef" : "0123456789ABCDEF";
+	ptr = &buffer[49];
+	*ptr = '\0';
+
+	do	{
+		*--ptr = array[n % base];
+		n /= base;
+	} while (n != 0);
+
+	if (sign)
+		*--ptr = sign;
+	return (ptr);
+}
+
+/**
+ * remove_comments - function replaces first instance of '#' with '\0'
+ * @buf: address of the string to modify
+ *
+ * Return: Always 0;
+ */
+void remove_comments(char *buf)
+{
+	int i;
+
+	for (i = 0; buf[i] != '\0'; i++)
+		if (buf[i] == '#' && (!i || buf[i - 1] == ' '))
+		{
+			buf[i] = '\0';
+			break;
+		}
 }
