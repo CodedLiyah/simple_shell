@@ -1,136 +1,170 @@
 #include "shell.h"
-/**
- * salida3 - normal out
- * @m: copy of environmental variables
- * @e: number of elements in m
- */
-void salida3(char **m, int e)
-{
-	free_grid(m, e);
-	exit(currentstatus(NULL));
-}
-/**
- * salida2 - out with double Ctrl+D
- *@m: copy of environmental variables
- *@e: number of elements in m
- *@line: input of user
- */
-void salida2(char **m, int e, char *line)
-{
-	free(line);
-	free_grid(m, e);
-	write(STDIN_FILENO, "#cisfun$ ", 9);
-	write(STDIN_FILENO, "\n", 1);
-	exit(currentstatus(NULL));
-}
-/**
- * salida1 - normal out
- * @m: copy of environmental variables
- * @e: number of elements in m
- */
-void salida1(char **m, int e)
-{
-	free_grid(m, e);
-	write(STDIN_FILENO, "\n", 1);
-	exit(currentstatus(NULL));
-}
-/**
- * _getline - function to read what the user writes
- * @a: pointer to loop counter
- * @e: length of m
- * @m: copy of environmental
- * Return: line in sucess otherwise NULL.
- */
-char  *_getline(int *a, char **m, int e)
-{
-	char letter[1] = {0}, *line = NULL;
-	size_t bufsize = 0;
-	static int num = 1;
 
-	if (num == 2)
-	salida2(m, e, line);
-	for (; (num != 0); bufsize = 0, free(line))
-	{
-		write(STDIN_FILENO, "#cisfun$ ", 9);
-		*a = *a + 1;
-		signal(SIGINT, _signal);
-		for (; ((num = read(STDIN_FILENO, letter, 1)) > 0); bufsize++)
-		{
-			if (bufsize == 0)
-				line = _calloc(bufsize + 3, sizeof(char));
-			else
-				line = _realloc(line, bufsize, bufsize + 3);
-			if (!line)
-			{
-				num = 0;
-				break;
-			}
-			line[bufsize] = letter[0], line[bufsize + 1] = '\n';
-			line[bufsize + 2] = '\0';
-			if (line[bufsize] == '\n')
-				break;
-		}
-		if (num == 0 && bufsize == 0)
-			break;
-		else if (num == 0 && bufsize != 0)
-		{
-			num = 2;
-			break;
-		}
-		else if (line[0] != '\n')
-			return (line);
-	}
-	if (num == 0)
-		salida1(m, e);
-	return (line);
-}
 /**
- * _getlineav - function to read what the user writes
- * @a: pointer to loop counter
- * @e: length of m
- * @m: copy of environmental
- * @av: arguments in input
- * Return: line in sucess otherwise NULL.
+ * input_buf - buffers chained commands
+ * @info: parameter struct
+ * @buf: address of buffer
+ * @len: address of len var
+ *
+ * Return: bytes read
  */
-char  *_getlineav(int *a, char **m, int e, char **av)
+ssize_t input_buf(info_t *info, char **buf, size_t *len)
 {
-	char letter[1] = {0}, *li = NULL;
-	size_t bz = 0;
-	static unsigned int num = 1;
-	static int  fd;
+	ssize_t r = 0;
+	size_t len_p = 0;
 
-	for (; (num != 0); bz = 0, free(li))
+	if (!*len) /* if nothing left in the buffer, fill it */
 	{
-		fd = open(av[1], O_RDONLY);
-		if (fd == -1)
-		{ close(fd), free_grid(m, e);
-			write(STDERR_FILENO, av[0], _strlen(av[0]));
-			write(STDERR_FILENO, ": 0: ", 5);
-			write(STDERR_FILENO, "Can't open ", 11);
-			write(STDERR_FILENO, av[1], _strlen(av[1]));
-			write(STDERR_FILENO, "\n", 1), exit(127);
-		}
-		*a = *a + 1;
-		while ((num = read(fd, letter, 1)) > 0)
+		/*bfree((void **)info->cmd_buf);*/
+		free(*buf);
+		*buf = NULL;
+		signal(SIGINT, sigintHandler);
+#if USE_GETLINE
+		r = getline(buf, &len_p, stdin);
+#else
+		r = _getline(info, buf, &len_p);
+#endif
+		if (r > 0)
 		{
-			if (bz == 0)
-				li = _calloc(bz + 3, sizeof(char));
-			else
-				li = _realloc(li, bz, bz + 3);
-			if (!li)
+			if ((*buf)[r - 1] == '\n')
 			{
-				num = 0;
-				break;
+				(*buf)[r - 1] = '\0'; /* remove trailing newline */
+				r--;
 			}
-			li[bz] = letter[0], li[bz + 1] = '\n';
-			li[bz + 2] = '\0', bz++;
+			info->linecount_flag = 1;
+			remove_comments(*buf);
+			build_history_list(info, *buf, info->histcount++);
+			/* if (_strchr(*buf, ';')) is this a command chain? */
+			{
+				*len = r;
+				info->cmd_buf = buf;
+			}
 		}
-		if (num == 0 && bz == 0)
-			break;
-		else if (li[0] != '\n')
-			return (li);
 	}
-	if (num == 0)
-		close(fd), salida3(m, e);
-	return (li);
+	return (r);
+}
+
+/**
+ * get_input - gets a line minus the newline
+ * @info: parameter struct
+ *
+ * Return: bytes read
+ */
+ssize_t get_input(info_t *info)
+{
+	static char *buf; /* the ';' command chain buffer */
+	static size_t i, j, len;
+	ssize_t r = 0;
+	char **buf_p = &(info->arg), *p;
+
+	_putchar(BUF_FLUSH);
+	r = input_buf(info, &buf, &len);
+	if (r == -1) /* EOF */
+		return (-1);
+	if (len)	/* we have commands left in the chain buffer */
+	{
+		j = i; /* init new iterator to current buf position */
+		p = buf + i; /* get pointer for return */
+
+		check_chain(info, buf, &j, i, len);
+		while (j < len) /* iterate to semicolon or end */
+		{
+			if (is_chain(info, buf, &j))
+				break;
+			j++;
+		}
+
+		i = j + 1; /* increment past nulled ';'' */
+		if (i >= len) /* reached end of buffer? */
+		{
+			i = len = 0; /* reset position and length */
+			info->cmd_buf_type = CMD_NORM;
+		}
+
+		*buf_p = p; /* pass back pointer to current command position */
+		return (_strlen(p)); /* return length of current command */
+	}
+
+	*buf_p = buf; /* else not a chain, pass back buffer from _getline() */
+	return (r); /* return length of buffer from _getline() */
+}
+
+/**
+ * read_buf - reads a buffer
+ * @info: parameter struct
+ * @buf: buffer
+ * @i: size
+ *
+ * Return: r
+ */
+ssize_t read_buf(info_t *info, char *buf, size_t *i)
+{
+	ssize_t r = 0;
+
+	if (*i)
+		return (0);
+	r = read(info->readfd, buf, READ_BUF_SIZE);
+	if (r >= 0)
+		*i = r;
+	return (r);
+}
+
+/**
+ * _getline - gets the next line of input from STDIN
+ * @info: parameter struct
+ * @ptr: address of pointer to buffer, preallocated or NULL
+ * @length: size of preallocated ptr buffer if not NULL
+ *
+ * Return: s
+ */
+int _getline(info_t *info, char **ptr, size_t *length)
+{
+	static char buf[READ_BUF_SIZE];
+	static size_t i, len;
+	size_t k;
+	ssize_t r = 0, s = 0;
+	char *p = NULL, *new_p = NULL, *c;
+
+	p = *ptr;
+	if (p && length)
+		s = *length;
+	if (i == len)
+		i = len = 0;
+
+	r = read_buf(info, buf, &len);
+	if (r == -1 || (r == 0 && len == 0))
+		return (-1);
+
+	c = _strchr(buf + i, '\n');
+	k = c ? 1 + (unsigned int)(c - buf) : len;
+	new_p = _realloc(p, s, s ? s + k : k + 1);
+	if (!new_p) /* MALLOC FAILURE! */
+		return (p ? free(p), -1 : -1);
+
+	if (s)
+		_strncat(new_p, buf + i, k - i);
+	else
+		_strncpy(new_p, buf + i, k - i + 1);
+
+	s += k - i;
+	i = k;
+	p = new_p;
+
+	if (length)
+		*length = s;
+	*ptr = p;
+	return (s);
+}
+
+/**
+ * sigintHandler - blocks ctrl-C
+ * @sig_num: the signal number
+ *
+ * Return: void
+ */
+void sigintHandler(__attribute__((unused))int sig_num)
+{
+	_puts("\n");
+	_puts("$ ");
+	_putchar(BUF_FLUSH);
 }
