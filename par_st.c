@@ -1,75 +1,87 @@
 #include "shell.h"
-/**
- * Counter - counts the number of lim found in the input
- * @L: the input string;
- * @lim: character to find inside the L string
- * Return: number of characters found
- */
-int Counter(char *L, char *lim)
-{
-	int ct = 0, num = 0, ct2 = 0;
 
-	while (lim[ct2] != '\0')
+/**
+ * _strcpy - copies a string
+ * @dest: the destination
+ * @src: the source
+ *
+ * Return: pointer to destination
+ */
+char *_strcpy(char *dest, char *src)
+{
+	int i = 0;
+
+	if (dest == src || src == 0)
+		return (dest);
+	while (src[i])
 	{
-		ct = 0;
-		while (L && L[ct] != '\0')
-		{
-			if (L[ct] != lim[ct2])
-			{
-				if (L[ct + 1] == lim[ct2] || L[ct + 1] == '\0')
-					num++;
-			}
-			ct++;
-		}
-		ct2++;
+		dest[i] = src[i];
+		i++;
 	}
-	return (num);
+	dest[i] = 0;
+	return (dest);
 }
-/**
- * parsing - create an array of pointers depending of the delimit characters
- * @line: input of the user
- * Return: an array of pointers of n size
- */
-char **parsing(char *line)
-{
-	char *token = NULL, **p = NULL;
-	int length = 0, j = 0, i = 0, buffsize = 0;
 
-	if (line == NULL)
+/**
+ * _strdup - duplicates a string
+ * @str: the string to duplicate
+ *
+ * Return: pointer to the duplicated string
+ */
+char *_strdup(const char *str)
+{
+	int length = 0;
+	char *ret;
+
+	if (str == NULL)
 		return (NULL);
-	buffsize = Counter(line, " \t");
-	p = _calloc((buffsize + 1), sizeof(char *));
-	if (!p)
-	{
-		perror("No memory");
+	while (*str++)
+		length++;
+	ret = malloc(sizeof(char) * (length + 1));
+	if (!ret)
 		return (NULL);
-	}
-/*store the token partition inside **p */
-	token = _strtoky(line, " \t\n");
-	if (!token)
+	for (length++; length--;)
+		ret[length] = *--str;
+	return (ret);
+}
+
+/**
+ *_puts - prints an input string
+ *@str: the string to be printed
+ *
+ * Return: Nothing
+ */
+void _puts(char *str)
+{
+	int i = 0;
+
+	if (!str)
+		return;
+	while (str[i] != '\0')
 	{
-		free(p);
-		return (NULL);
+		_putchar(str[i]);
+		i++;
 	}
-	while (token)
+}
+
+/**
+ * _putchar - writes the character c to stdout
+ * @c: The character to print
+ *
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _putchar(char c)
+{
+	static int i;
+	static char buf[WRITE_BUF_SIZE];
+
+	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
 	{
-		while (token[length] != '\0')
-			length++;
-		p[j] = _calloc((length + 1), sizeof(char));
-		if (p[j] == NULL)
-		{
-			free_grid(p, j);
-			perror("No memory");
-			return (NULL);
-		}
-/*fill the pointer with the content of token*/
-		for (i = 0; i < length; i++)
-			p[j][i] = token[i];
-		length = 0;
-		j++;
-/*get the next element*/
-		token = _strtoky(NULL, " \t\n");
+		write(1, buf, i);
+		i = 0;
 	}
-	p[j] = NULL;
-	return (p);
+	if (c != BUF_FLUSH)
+		buf[i++] = c;
+	return (1);
 }

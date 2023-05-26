@@ -1,90 +1,160 @@
 #include "shell.h"
 
 /**
- * _isunsetenv - finds if line input is unsetenv
- * @p: input of user, array of pointers
- * @myenv: copy of environmental variables
- * @loop: loops counter
- * @v: arguments in input
- * @e: number of elements in myenv
- * Return: -1 if fails or 0 if success
+ * hsh - main shell loop
+ * @info: the parameter & return info struct
+ * @av: the argument vector from main()
+ *
+ * Return: 0 on success, 1 on error, or error code
  */
-int _isunsetenv(char **p, char **myenv, int *e, int loop, char *v[])
+int hsh(info_t *info, char **av)
 {
-	char str[] = "unsetenv";
-	int i = 0, cont = 0, salida = -1;
+	ssize_t r = 0;
+	int builtin_ret = 0;
 
-	i = 0;
-	while (p[0][i] != '\0')
+	while (r != -1 && builtin_ret != -2)
 	{
-		if (i < 8)
+		clear_info(info);
+		if (interactive(info))
+			_puts("$ ");
+		_eputchar(BUF_FLUSH);
+		r = get_input(info);
+		if (r != -1)
 		{
-			if (p[0][i] == str[i])
-				cont++;
+			set_info(info, av);
+			builtin_ret = find_builtin(info);
+			if (builtin_ret == -1)
+				find_cmd(info);
 		}
-		i++;
+		else if (interactive(info))
+			_putchar('\n');
+		free_info(info, 0);
 	}
-	if (i == 8)
-		cont++;
-	if (cont == 9)
+	write_history(info);
+	free_info(info, 1);
+	if (!interactive(info) && info->status)
+		exit(info->status);
+	if (builtin_ret == -2)
 	{
-		if (p[1] != NULL)
-			_unsetenv(p, myenv, e, loop, v);
-		else
-			_put_err(p, loop, 5, v);
-		salida = 0;
-		currentstatus(&salida);
+		if (info->err_num == -1)
+			exit(info->status);
+		exit(info->err_num);
 	}
-	else if (cont == 8)
-	{
-		salida = 0;
-		_put_err(p, loop, 3, v);
-		currentstatus(&salida);
-	}
-	return (salida);
+	return (builtin_ret);
 }
-/**
- * _unsetenv - function to remove an environment variable
- * environ points to an array of pointers to strings called the "environment"
- * @p: input of user, array of pointers
- * @myenv: icopy of environmental
- * @loop: loops counter
- * @v: arguments in input
- * @e: number of elements in myenv
- */
-void _unsetenv(char **p, char **myenv, int *e, int loop, char *v[])
-{
-	int i, lg, j, k = 0, k2 = 0, k3 = 0, cont = 0;
 
-	lg = _strlen(p[1]);
-	for (i = 0; myenv[i] != NULL; i++, cont = 0)
-	{
-		for (j = 0; p[1][j] != '\0' && j < lg; j++)
+/**
+ * find_builtin - finds a builtin command
+ * @info: the parameter & return info struct
+ *
+ * Return: -1 if builtin not found,
+ *			0 if builtin executed successfully,
+ *			1 if builtin found but not successful,
+ *			-2 if builtin signals exit()
+ */
+int find_builtin(info_t *info)
+{
+	int i, built_in_ret = -1;
+	builtin_table builtintbl[] = {
+		{"exit", _myexit},
+		{"env", _myenv},
+		{"help", _myhelp},
+		{"history", _myhistory},
+		{"setenv", _mysetenv},
+		{"unsetenv", _myunsetenv},
+		{"cd", _mycd},
+		{"alias", _myalias},
+		{NULL, NULL}
+	};
+
+	for (i = 0; builtintbl[i].type; i++)
+		if (_strcmp(info->argv[0], builtintbl[i].type) == 0)
 		{
-			if (p[1][j] == myenv[i][j])
-				cont++;
-		}
-		if (cont == lg)
+			info->line_count++;
+			built_in_ret = builtintbl[i].func(info);
 			break;
-	}
-	if (cont == lg)
-	{
-		for (k = i; myenv[k] != NULL && myenv[k + 1] != NULL; k++)
-		{
-			for (k2 = 0; myenv[k][k2] != '\0'; k2++)
-				myenv[k][k2] = 0;
-			for (k3 = 0; myenv[k + 1][k3] != '\0'; k3++)
-				;
-			if (k2 < k3)
-				myenv[k] = _realloc(myenv[k], k2, k3);
-			for (k2 = 0; myenv[k + 1][k2] != '\0'; k2++)
-				myenv[k][k2] = myenv[k + 1][k2];
 		}
-		free(myenv[k]);
-		myenv[k] = NULL;
-		*e = *e - 1;
-		free(myenv[k + 1]);
+	return (built_in_ret);
+}
+
+/**
+ * find_cmd - finds a command in PATH
+ * @info: the parameter & return info struct
+ *
+ * Return: void
+ */
+void find_cmd(info_t *info)
+{
+	char *path = NULL;
+	int i, k;
+
+	info->path = info->argv[0];
+	if (info->linecount_flag == 1)
+	{
+		info->line_count++;
+		info->linecount_flag = 0;
+	}
+	for (i = 0, k = 0; info->arg[i]; i++)
+		if (!is_delim(info->arg[i], " \t\n"))
+			k++;
+	if (!k)
+		return;
+
+	path = find_path(info, _getenv(info, "PATH="), info->argv[0]);
+	if (path)
+	{
+		info->path = path;
+		fork_cmd(info);
 	}
 	else
-		_put_err(p, loop, 5, v);
+	{
+		if ((interactive(info) || _getenv(info, "PATH=")
+			|| info->argv[0][0] == '/') && is_cmd(info, info->argv[0]))
+			fork_cmd(info);
+		else if (*(info->arg) != '\n')
+		{
+			info->status = 127;
+			print_error(info, "not found\n");
+		}
+	}
+}
+
+/**
+ * fork_cmd - forks a an exec thread to run cmd
+ * @info: the parameter & return info struct
+ *
+ * Return: void
+ */
+void fork_cmd(info_t *info)
+{
+	pid_t child_pid;
+
+	child_pid = fork();
+	if (child_pid == -1)
+	{
+		/* TODO: PUT ERROR FUNCTION */
+		perror("Error:");
+		return;
+	}
+	if (child_pid == 0)
+	{
+		if (execve(info->path, info->argv, get_environ(info)) == -1)
+		{
+			free_info(info, 1);
+			if (errno == EACCES)
+				exit(126);
+			exit(1);
+		}
+		/* TODO: PUT ERROR FUNCTION */
+	}
+	else
+	{
+		wait(&(info->status));
+		if (WIFEXITED(info->status))
+		{
+			info->status = WEXITSTATUS(info->status);
+			if (info->status == 126)
+				print_error(info, "Permission denied\n");
+		}
+	}
 }

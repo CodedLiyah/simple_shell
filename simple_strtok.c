@@ -1,99 +1,94 @@
 #include "shell.h"
+
 /**
- * _sch - search if a char is inside a string
- * @s: string to review
- * @c: char to find
- * Return: 1 if success 0 if not
+ * **strtow - splits a string into words. Repeat delimiters are ignored
+ * @str: the input string
+ * @d: the delimeter string
+ * Return: a pointer to an array of strings, or NULL on failure
  */
-int _sch(char *s, char c)
-{
-	int cont = 0;
 
-	while (s[cont] != '\0')
+char **strtow(char *str, char *d)
+{
+	int i, j, k, m, numwords = 0;
+	char **s;
+
+	if (str == NULL || str[0] == 0)
+		return (NULL);
+	if (!d)
+		d = " ";
+	for (i = 0; str[i] != '\0'; i++)
+		if (!is_delim(str[i], d) && (is_delim(str[i + 1], d) || !str[i + 1]))
+			numwords++;
+
+	if (numwords == 0)
+		return (NULL);
+	s = malloc((1 + numwords) * sizeof(char *));
+	if (!s)
+		return (NULL);
+	for (i = 0, j = 0; j < numwords; j++)
 	{
-		if (s[cont] == c)
+		while (is_delim(str[i], d))
+			i++;
+		k = 0;
+		while (!is_delim(str[i + k], d) && str[i + k])
+			k++;
+		s[j] = malloc((k + 1) * sizeof(char));
+		if (!s[j])
 		{
-			break;
+			for (k = 0; k < j; k++)
+				free(s[k]);
+			free(s);
+			return (NULL);
 		}
-		cont++;
+		for (m = 0; m < k; m++)
+			s[j][m] = str[i++];
+		s[j][m] = 0;
 	}
-	if (s[cont] == c)
-		return (1);
-	else
-		return (0);
+	s[j] = NULL;
+	return (s);
 }
+
 /**
- * _strtoky - takes the string to be tokenized and delimiter as input
- * @s: string to cut in parts
- * @d: delimiters
- * Return: first partition
+ * **strtow2 - splits a string into words
+ * @str: the input string
+ * @d: the delimeter
+ * Return: a pointer to an array of strings, or NULL on failure
  */
-char *_strtoky(char *s, char *d)
+char **strtow2(char *str, char d)
 {
-	static char *ultimo;
-	int i = 0, j = 0;
+	int i, j, k, m, numwords = 0;
+	char **s;
 
+	if (str == NULL || str[0] == 0)
+		return (NULL);
+	for (i = 0; str[i] != '\0'; i++)
+		if ((str[i] != d && str[i + 1] == d) ||
+		    (str[i] != d && !str[i + 1]) || str[i + 1] == d)
+			numwords++;
+	if (numwords == 0)
+		return (NULL);
+	s = malloc((1 + numwords) * sizeof(char *));
 	if (!s)
-		s = ultimo;
-	while (s[i] != '\0')
+		return (NULL);
+	for (i = 0, j = 0; j < numwords; j++)
 	{
-		if (_sch(d, s[i]) == 0 && s[i + 1] == '\0')
-		{
-			ultimo = s + i + 1;
-			*ultimo = '\0';
-			s = s + j;
-			return (s);
-		}
-		else if (_sch(d, s[i]) == 0 && _sch(d, s[i + 1]) == 0)
+		while (str[i] == d && str[i] != d)
 			i++;
-		else if (_sch(d, s[i]) == 0 && _sch(d, s[i + 1]) == 1)
+		k = 0;
+		while (str[i + k] != d && str[i + k] && str[i + k] != d)
+			k++;
+		s[j] = malloc((k + 1) * sizeof(char));
+		if (!s[j])
 		{
-			ultimo = s + i + 1;
-			*ultimo = '\0';
-			ultimo++;
-			s = s + j;
-			return (s);
+			for (k = 0; k < j; k++)
+				free(s[k]);
+			free(s);
+			return (NULL);
 		}
-		else if (_sch(d, s[i]) == 1)
-		{
-			j++;
-			i++;
-		}
+		for (m = 0; m < k; m++)
+			s[j][m] = str[i++];
+		s[j][m] = 0;
 	}
-	return (NULL);
-}
-/**
-* _strtoky2 - function tokenizaition with ;
-* @s: string to cut in parts
-* @d: delimiters
-* Return: first partition
-*/
-char *_strtoky2(char *s, char *d)
-{
-	static char *ultimo;
-	int i = 0, j = 0;
-
-	if (!s)
-		s = ultimo;
-	while (s[i] != '\0')
-	{
-		if (_sch(d, s[i]) == 0 && s[i + 1] == '\0')
-			i++;
-		else if (_sch(d, s[i]) == 0 && _sch(d, s[i + 1]) == 0)
-			i++;
-		else if (_sch(d, s[i]) == 0 && _sch(d, s[i + 1]) == 1)
-		{
-			ultimo = s + i + 1;
-			*ultimo = '\0';
-			ultimo++;
-			s = s + j;
-			return (s);
-		}
-		else if (_sch(d, s[i]) == 1)
-		{
-			j++;
-			i++;
-		}
-	}
-	return (NULL);
+	s[j] = NULL;
+	return (s);
 }
