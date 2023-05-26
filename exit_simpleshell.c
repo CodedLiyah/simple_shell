@@ -1,100 +1,74 @@
 #include "shell.h"
-#include <limits.h>
-/**
- *_type - get the type of exit
- * @p: input user, array of pointers
- * @L: counter of loops
- * @l: input user
- * @i: number of pointers inside the array of pointers
- * @v: arguments in input
- * @m: copy of environmental variables
- * @e: number of elements in m
- * @f: input complete
- */
-void _type(char **p, int L, char *l, int i, char **v, char **m, int e, char *f)
-{
-	unsigned int  c = 0, flag = 0;
-	long int valor = 0;
 
-	if (p[1] == NULL || (p[1][0] == '0' && p[1][1] == '\0'))
-	{
-		free(l), free(f), free_grid(p, i), free_grid(m, e);
-		exit(currentstatus(NULL));
-	}
-	else
-	{
-		while (p[1][c] != '\0')
-		{
-			if ((p[1][0] != '+' && p[1][0] != '-') &&
-			    (p[1][c] < 48 || p[1][c] > 57))
-			{
-				flag = 1;
-				break;
-			}
-			c++;
-		}
-		if (flag == 1)
-			_put_err(p, L, 1, v);
-		else
-		{ valor = _atoi(p[1]);
-			if (!(valor > INT_MAX) && valor > 0)
-			{
-				valor = valor % 256;
-				free(l), free(f), free_grid(p, i);
-				free_grid(m, e), exit(valor);
-			}
-			else if (valor < 0)
-			{
-				_put_err(p, L, 1, v);
-				free(l), free(f), free_grid(p, i);
-				free_grid(m, e), exit(2);
-			}
-			else
-				_put_err(p, L, 1, v);
-		}
-	}
-}
 /**
- * _isexit - finds if line input is exit therefore process termination
- * @p: input of user, array of pointers
- * @L: loop counter
- * @l: input user
- * @v: arguments in input
- * @m: copy of environmental variables
- * @f: complet input
- * Return: -1 if there is no exit or 0 if there is the word exit
+ **_strncpy - copies a string
+ *@dest: the destination string to be copied to
+ *@src: the source string
+ *@n: the amount of characters to be copied
+ *Return: the concatenated string
  */
-int _isexit(char **p, int L, char *l, char **v, char **m, char *f)
+char *_strncpy(char *dest, char *src, int n)
 {
-	char str[] = "exit";
-	int i, cont = 0, salida = -1, x = 0, e = 0;
+	int i, j;
+	char *s = dest;
 
-	for (x = 0; p[x] != NULL; x++)
-		;
-	for (e = 0; m[e] != NULL; e++)
-		;
 	i = 0;
-	while (p[0][i] != '\0')
+	while (src[i] != '\0' && i < n - 1)
 	{
-		if (i < 4)
-		{
-			if (p[0][i] == str[i])
-				cont++;
-		}
+		dest[i] = src[i];
 		i++;
 	}
-	if (i == 4)
-		cont++;
+	if (i < n)
+	{
+		j = i;
+		while (j < n)
+		{
+			dest[j] = '\0';
+			j++;
+		}
+	}
+	return (s);
+}
 
-	if (cont == 5)
+/**
+ **_strncat - concatenates two strings
+ *@dest: the first string
+ *@src: the second string
+ *@n: the amount of bytes to be maximally used
+ *Return: the concatenated string
+ */
+char *_strncat(char *dest, char *src, int n)
+{
+	int i, j;
+	char *s = dest;
+
+	i = 0;
+	j = 0;
+	while (dest[i] != '\0')
+		i++;
+	while (src[j] != '\0' && j < n)
 	{
-		_type(p, L, l, x, v, m, e, f);
-		salida = 0;
+		dest[i] = src[j];
+		i++;
+		j++;
 	}
-	else if (cont == 4)
-	{
-		salida = 0;
-		_put_err(p, L, 3, v);
-	}
-	return (salida);
+	if (j < n)
+		dest[i] = '\0';
+	return (s);
+}
+
+/**
+ **_strchr - locates a character in a string
+ *@s: the string to be parsed
+ *@c: the character to look for
+ *Return: (s) a pointer to the memory area s
+ */
+char *_strchr(char *s, char c)
+{
+	do {
+		if (*s == c)
+			return (s);
+	} while (*s++ != '\0');
+
+	return (NULL);
 }
