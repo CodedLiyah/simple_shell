@@ -1,185 +1,143 @@
 #include "shell.h"
 
 /**
- * read_help - reads all builtins text files and prints it to POSIX stdout
- * @m: copy of environment variables
- * Return: number of characters to write, otherwise 0.
+ * get_history_file - gets the history file
+ * @info: parameter struct
+ *
+ * Return: allocated string containg history file
  */
 
-ssize_t read_help(char **m)
+char *get_history_file(info_t *info)
 {
-	int fd, r, w;
-	char *buf;
-	char helpfiles[] = "/simple_shell/_helpfiles/help_all.txt";
-	char *home, *helpdir;
-	size_t letters = 1024;
+	char *buf, *dir;
 
-	buf = malloc((sizeof(char) * letters + 1));
-	if (buf == NULL)
-		return (0);
-	home = _gethome(m);
-	helpdir = str_concat(home, helpfiles);
-	fd = open(helpdir, O_RDONLY);
-	if (fd == -1)
-	{
-		free(helpdir);
-		free(buf);
-		return (0);
-	}
-	r = read(fd, buf, letters);
-	if (r == -1)
-	{
-		free(helpdir);
-		free(buf);
-		return (0);
-	}
-	w = write(STDOUT_FILENO, buf, r);
-	if (w == -1)
-	{
-		free(helpdir);
-		free(buf);
-		return (0);
-	}
-	close(fd);
-	free(helpdir);
-	free(buf);
-	return (r);
+	dir = _getenv(info, "HOME=");
+	if (!dir)
+		return (NULL);
+	buf = malloc(sizeof(char) * (_strlen(dir) + _strlen(HIST_FILE) + 2));
+	if (!buf)
+		return (NULL);
+	buf[0] = 0;
+	_strcpy(buf, dir);
+	_strcat(buf, "/");
+	_strcat(buf, HIST_FILE);
+	return (buf);
 }
 
 /**
- * read_cdhelp - reads cd text file and prints it to POSIX stdout
- * @m: copy of environment variables
- * Return: number of letters to write, otherwise 0.
+ * write_history - creates a file, or appends to an existing file
+ * @info: the parameter struct
+ *
+ * Return: 1 on success, else -1
  */
-
-ssize_t read_cdhelp(char **m)
+int write_history(info_t *info)
 {
-	int fd, r, w;
-	char *buf;
-	char helpfiles[] = "/simple_shell/_helpfiles/help_cd.txt";
-	char *home, *helpdir;
-	size_t letters = 1024;
+	ssize_t fd;
+	char *filename = get_history_file(info);
+	list_t *node = NULL;
 
-	buf = malloc((sizeof(char) * letters + 1));
-	if (buf == NULL)
-		return (0);
-	home = _gethome(m);
-	helpdir = str_concat(home, helpfiles);
-	fd = open(helpdir, O_RDONLY);
+	if (!filename)
+		return (-1);
+
+	fd = open(filename, O_CREAT | O_TRUNC | O_RDWR, 0644);
+	free(filename);
 	if (fd == -1)
+		return (-1);
+	for (node = info->history; node; node = node->next)
 	{
-		free(helpdir);
-		free(buf);
-		return (0);
+		_putsfd(node->str, fd);
+		_putfd('\n', fd);
 	}
-	r = read(fd, buf, letters);
-	if (r == -1)
-	{
-		free(helpdir);
-		free(buf);
-		return (0);
-	}
-	w = write(STDOUT_FILENO, buf, r);
-	if (w == -1)
-	{
-		free(helpdir);
-		free(buf);
-		return (0);
-	}
+	_putfd(BUF_FLUSH, fd);
 	close(fd);
-	free(helpdir);
-	free(buf);
-	return (r);
+	return (1);
 }
 
 /**
- * read_exithelp - reads exit text file and prints it to POSIX stdout
- * @m: copy of environment variables
- * Return: number of letters to write, otherwise 0.
+ * read_history - reads history from file
+ * @info: the parameter struct
+ *
+ * Return: histcount on success, 0 otherwise
  */
-
-ssize_t read_exithelp(char **m)
+int read_history(info_t *info)
 {
-	int fd, r, w;
-	char *buf;
-	char helpfiles[] = "/simple_shell/_helpfiles/help_exit.txt";
-	char *home, *helpdir;
-	size_t letters = 1024;
+	int i, last = 0, linecount = 0;
+	ssize_t fd, rdlen, fsize = 0;
+	struct stat st;
+	char *buf = NULL, *filename = get_history_file(info);
 
-	buf = malloc((sizeof(char) * letters + 1));
-	if (buf == NULL)
+	if (!filename)
 		return (0);
-	home = _gethome(m);
-	helpdir = str_concat(home, helpfiles);
-	fd = open(helpdir, O_RDONLY);
+
+	fd = open(filename, O_RDONLY);
+	free(filename);
 	if (fd == -1)
-	{
-		free(helpdir);
-		free(buf);
 		return (0);
-	}
-	r = read(fd, buf, letters);
-	if (r == -1)
-	{
-		free(helpdir);
-		free(buf);
+	if (!fstat(fd, &st))
+		fsize = st.st_size;
+	if (fsize < 2)
 		return (0);
-	}
-	w = write(STDOUT_FILENO, buf, r);
-	if (w == -1)
-	{
-		free(helpdir);
-		free(buf);
+	buf = malloc(sizeof(char) * (fsize + 1));
+	if (!buf)
 		return (0);
-	}
+	rdlen = read(fd, buf, fsize);
+	buf[fsize] = 0;
+	if (rdlen <= 0)
+		return (free(buf), 0);
 	close(fd);
-	free(helpdir);
+	for (i = 0; i < fsize; i++)
+		if (buf[i] == '\n')
+		{
+			buf[i] = 0;
+			build_history_list(info, buf + last, linecount++);
+			last = i + 1;
+		}
+	if (last != i)
+		build_history_list(info, buf + last, linecount++);
 	free(buf);
-	return (r);
+	info->histcount = linecount;
+	while (info->histcount-- >= HIST_MAX)
+		delete_node_at_index(&(info->history), 0);
+	renumber_history(info);
+	return (info->histcount);
 }
 
 /**
- * read_helphelp - reads help text file and prints it to POSIX stdout
- * @m: copy of environment variables
- * Return: number of letters to write, otherwise 0.
+ * build_history_list - adds entry to a history linked list
+ * @info: Structure containing potential arguments. Used to maintain
+ * @buf: buffer
+ * @linecount: the history linecount, histcount
+ *
+ * Return: Always 0
  */
-
-ssize_t read_helphelp(char **m)
+int build_history_list(info_t *info, char *buf, int linecount)
 {
-	int fd, r, w;
-	char *buf;
-	char helpfiles[] = "/simple_shell/_helpfiles/help_help.txt";
-	char *home, *helpdir;
-	size_t letters = 1024;
+	list_t *node = NULL;
 
-	buf = malloc((sizeof(char) * letters + 1));
-	if (buf == NULL)
-		return (0);
-	home = _gethome(m);
-	helpdir = str_concat(home, helpfiles);
-	fd = open(helpdir, O_RDONLY);
-	if (fd == -1)
+	if (info->history)
+		node = info->history;
+	add_node_end(&node, buf, linecount);
+
+	if (!info->history)
+		info->history = node;
+	return (0);
+}
+
+/**
+ * renumber_history - renumbers the history linked list after changes
+ * @info: Structure containing potential arguments. Used to maintain
+ *
+ * Return: the new histcount
+ */
+int renumber_history(info_t *info)
+{
+	list_t *node = info->history;
+	int i = 0;
+
+	while (node)
 	{
-		free(helpdir);
-		free(buf);
-		return (0);
+		node->num = i++;
+		node = node->next;
 	}
-	r = read(fd, buf, letters);
-	if (r == -1)
-	{
-		free(helpdir);
-		free(buf);
-		return (0);
-	}
-	w = write(STDOUT_FILENO, buf, r);
-	if (w == -1)
-	{
-		free(helpdir);
-		free(buf);
-		return (0);
-	}
-	close(fd);
-	free(helpdir);
-	free(buf);
-	return (r);
+	return (info->histcount = i);
 }
