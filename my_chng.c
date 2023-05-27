@@ -1,13 +1,12 @@
 #include "shell.h"
 
 /**
- * is_cmd - It determines if a file is executable
- * @info: An info struct
- * @path: The path to the file
+ * is_cmd - determines if a file is an executable command
+ * @info: the info struct
+ * @path: path to the file
  *
  * Return: 1 if true, 0 otherwise
  */
-
 int is_cmd(info_t *info, char *path)
 {
 	struct stat st;
@@ -18,43 +17,39 @@ int is_cmd(info_t *info, char *path)
 
 	if (st.st_mode & S_IFREG)
 	{
-	return (1);
+		return (1);
 	}
-
 	return (0);
 }
 
 /**
- * dup_chars - It duplicates characters
- * @pathstr: A PATH string
- * @start: The starting index
- * @stop: A stopping index
+ * dup_chars - duplicates characters
+ * @pathstr: the PATH string
+ * @start: starting index
+ * @stop: stopping index
  *
- * Return: The pointer to new buffer
+ * Return: pointer to new buffer
  */
-
 char *dup_chars(char *pathstr, int start, int stop)
 {
 	static char buf[1024];
-	int x = 0, k = 0;
+	int i = 0, k = 0;
 
-	for (k = 0, x = start; x < stop; x++)
-		if (pathstr[x] != ':')
-			buf[k++] = pathstr[x];
+	for (k = 0, i = start; i < stop; i++)
+		if (pathstr[i] != ':')
+			buf[k++] = pathstr[i];
 	buf[k] = 0;
-
 	return (buf);
 }
 
 /**
- * find_path - It finds this cmd in the PATH
- * @info: Info struct
- * @pathstr: A PATH string
- * @cmd: cmd to find
+ * find_path - finds this cmd in the PATH string
+ * @info: the info struct
+ * @pathstr: the PATH string
+ * @cmd: the cmd to find
  *
  * Return: full path of cmd if found or NULL
  */
-
 char *find_path(info_t *info, char *pathstr, char *cmd)
 {
 	int i = 0, curr_pos = 0;
