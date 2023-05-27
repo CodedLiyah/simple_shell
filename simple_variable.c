@@ -1,11 +1,11 @@
 #include "shell.h"
 
 /**
- * hsh - main shell loop
- * @info: the parameter & return info struct
- * @av: the argument vector from main()
+ * hsh - The main shell loop
+ * @info: Parameter & return info struct
+ * @av: The argument vector from main()
  *
- * Return: 0 on success, 1 on error, or error code
+ * Return: 0 on success, 1 on error
  */
 int hsh(info_t *info, char **av)
 {
@@ -54,7 +54,7 @@ int hsh(info_t *info, char **av)
  */
 int find_builtin(info_t *info)
 {
-	int i, built_in_ret = -1;
+	int x, built_in_ret = -1;
 	builtin_table builtintbl[] = {
 		{"exit", _myexit},
 		{"env", _myenv},
@@ -67,26 +67,27 @@ int find_builtin(info_t *info)
 		{NULL, NULL}
 	};
 
-	for (i = 0; builtintbl[i].type; i++)
-		if (_strcmp(info->argv[0], builtintbl[i].type) == 0)
+	for (x = 0; builtintbl[x].type; x++)
+		if (_strcmp(info->argv[0], builtintbl[x].type) == 0)
 		{
 			info->line_count++;
-			built_in_ret = builtintbl[i].func(info);
+			built_in_ret = builtintbl[x].func(info);
 			break;
 		}
 	return (built_in_ret);
 }
 
 /**
- * find_cmd - finds a command in PATH
- * @info: the parameter & return info struct
+ * find_cmd - It finds a command in PATH
+ * @info: Parameter and return info struct
  *
  * Return: void
  */
+
 void find_cmd(info_t *info)
 {
 	char *path = NULL;
-	int i, k;
+	int x, y;
 
 	info->path = info->argv[0];
 	if (info->linecount_flag == 1)
@@ -94,11 +95,11 @@ void find_cmd(info_t *info)
 		info->line_count++;
 		info->linecount_flag = 0;
 	}
-	for (i = 0, k = 0; info->arg[i]; i++)
-		if (!is_delim(info->arg[i], " \t\n"))
-			k++;
-	if (!k)
-		return;
+	for (x = 0, y = 0; info->arg[x]; x++)
+		if (!is_delim(info->arg[x], " \t\n"))
+			y++;
+	if (!y)
+	return;
 
 	path = find_path(info, _getenv(info, "PATH="), info->argv[0]);
 	if (path)
@@ -120,11 +121,12 @@ void find_cmd(info_t *info)
 }
 
 /**
- * fork_cmd - forks a an exec thread to run cmd
- * @info: the parameter & return info struct
+ * fork_cmd - It forks a an exec thread to run
+ * @info: Parameter and return info struct
  *
  * Return: void
  */
+
 void fork_cmd(info_t *info)
 {
 	pid_t child_pid;

@@ -1,33 +1,36 @@
 #include "shell.h"
 
 /**
- * _strcpy - copies a string
- * @dest: the destination
- * @src: the source
+ * _strcpy - It copies a string
+ * @dest: Destination
+ * @src: Source
  *
- * Return: pointer to destination
+ * Return: A pointer to destination
  */
+
 char *_strcpy(char *dest, char *src)
 {
-	int i = 0;
+	int x = 0;
 
 	if (dest == src || src == 0)
 		return (dest);
-	while (src[i])
+	while (src[x])
 	{
-		dest[i] = src[i];
-		i++;
+		dest[x] = src[x];
+		x++;
 	}
-	dest[i] = 0;
+
+	dest[x] = 0;
 	return (dest);
 }
 
 /**
- * _strdup - duplicates a string
- * @str: the string to duplicate
+ * _strdup - It duplicates a string
+ * @str: String to duplicate
  *
- * Return: pointer to the duplicated string
+ * Return: A pointer to the duplicated string
  */
+
 char *_strdup(const char *str)
 {
 	int length = 0;
@@ -46,21 +49,22 @@ char *_strdup(const char *str)
 }
 
 /**
- *_puts - prints an input string
- *@str: the string to be printed
+ *_puts - It prints an input string
+ *@str: String to be printed
  *
  * Return: Nothing
  */
+
 void _puts(char *str)
 {
-	int i = 0;
+	int x = 0;
 
 	if (!str)
 		return;
-	while (str[i] != '\0')
+	while (str[x] != '\0')
 	{
-		_putchar(str[i]);
-		i++;
+		_putchar(str[x]);
+		x++;
 	}
 }
 
@@ -71,6 +75,7 @@ void _puts(char *str)
  * Return: On success 1.
  * On error, -1 is returned, and errno is set appropriately.
  */
+
 int _putchar(char c)
 {
 	static int i;
